@@ -1,12 +1,14 @@
 #
 # Mr.Peng--2021/3/13 7:38 下午
 import sys
+from time import sleep
+
 import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
-from game_stats import CameStats
+from game_stats import GameStats
 
 
 class AlienInvasion:
@@ -103,7 +105,7 @@ class AlienInvasion:
         for bullet in self.bullets.copy():
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
-            print(len(self.bullets))
+
         self._check_bullet_alien_collisions()
 
     def _check_fleet_edges(self):
@@ -119,6 +121,33 @@ class AlienInvasion:
             alien.rect.y += self.settings.fleet_drop_speed
         self.settings.fleet_direction *= -1
 
+    def _ship_hit(self):
+        """响应飞船被外星人撞到"""
+        if self.stats.ships_left > 0:
+            # 将ships_left减1
+            self.stats.ships_left -= 1
+
+            # 清空余下的外星人和子弹
+            self.aliens.empty()
+            self.bullets.empty()
+            # 创建一群新的外星人，并将飞船放置屏幕底端的中央
+            self._create_fleet()
+            self.ship.center_ship()
+
+            # 暂停
+            sleep(0.5)
+        else:
+            self.stats.game_active = False
+
+    def _check_aliens_bottom(self):
+        """检查是否有外星人到达了屏幕底端"""
+        screen_rect = self.screen.get_rect()
+        for alien in self.aliens.sprites():
+            if alien.rect.bottom >= screen_rect.bottom:
+                # 像飞船被撞一样处理
+                self._ship_hit()
+                break
+
     def _update_aliens(self):
         """
             检查是否有外星人位于屏幕边缘，
@@ -127,8 +156,10 @@ class AlienInvasion:
         self._check_fleet_edges()
         self.aliens.update()
         # 检测外星人和飞船之间的碰撞
-        if pygame.sprite.spritecollideany(self.ship,self.aliens):
-            print("Ship hit!!!")
+        if pygame.sprite.spritecollideany(self.ship, self.aliens):
+            self._ship_hit()
+        # 检测是否有外星人到达了屏幕底端
+        self._check_aliens_bottom()
 
     def _update_screen(self):
         # 每次循环时都重绘屏幕
@@ -144,9 +175,10 @@ class AlienInvasion:
         """开始游戏的主循环"""
         while True:
             self._check_event()
-            self.ship.update()
-            self._update_bullets()
-            self._update_aliens()
+            if self.stats.game_active:
+                self.ship.update()
+                self._update_bullets()
+                self._update_aliens()
             self._update_screen()
 
 
