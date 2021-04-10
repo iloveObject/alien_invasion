@@ -26,6 +26,8 @@ class Settings:
         # self.fleet_direction = 1
         # 加快游戏节奏的速度
         self.speedup_scale = 1.1
+        # 外星人分数的提高速度
+        self.score_scale = 1.5
 
         self.initialize_dynamic_settings()
 
@@ -44,3 +46,5 @@ class Settings:
         self.ship_speed *= self.speedup_scale
         self.alien_speed *= self.speedup_scale
         self.bullet_speed *= self.speedup_scale
+
+        self.alien_points = int(self.alien_points * self.score_scale)
